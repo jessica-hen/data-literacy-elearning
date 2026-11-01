@@ -1,0 +1,564 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Data Literacy – Fragenkarten</title>
+  <style>
+    :root {
+      --ink: #242424;
+      --muted: #5b5b5b;
+      --line: #d1d1d1;
+      --canvas: #f7f7f7;
+      --surface: #ffffff;
+      --brand: #c62828; /* Demo-Akzent; offiziellen CI-Farbwert einsetzen */
+      --brand-dark: #a91f24;
+      --brand-soft: #fff1f0;
+      --focus: #005a9e;
+      --teal: #0f7b75;
+      --shadow: 0 2px 6px rgba(0,0,0,.06), 0 12px 28px rgba(0,0,0,.05);
+      --text-scale: 1;
+      font-family: "Segoe UI", Inter, system-ui, -apple-system, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      background: var(--canvas);
+    }
+    .page {
+      width: min(1120px, calc(100% - 48px));
+      margin: 0 auto;
+      padding: 42px 0 56px;
+    }
+    .topline { display:flex; align-items:center; gap:12px; color:var(--muted); }
+    .mark {
+      display: inline-grid;
+      place-items: center;
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      color: white;
+      background: var(--brand);
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .breadcrumbs { display:flex; align-items:center; gap:8px; margin:0; padding:0; list-style:none; font-size:13px; }
+    .breadcrumbs li { display:inline-flex; align-items:center; gap:8px; }
+    .breadcrumbs a { color:var(--muted); text-decoration:none; border-radius:2px; }
+    .breadcrumbs a:hover { color:var(--brand-dark); text-decoration:underline; text-underline-offset:3px; }
+    .breadcrumbs a:focus-visible { outline:2px solid var(--focus); outline-offset:3px; }
+    .breadcrumb-separator { color:#8a8886; font-size:17px; line-height:1; }
+    .breadcrumb-current { color:var(--ink); font-weight:600; }
+    body[data-theme="dark"] .breadcrumb-separator { color:#b5b3b1; }
+    h1 {
+      max-width: 760px;
+      margin: 34px 0 12px;
+      font-size: clamp(30px, 4vw, 44px);
+      line-height: 1.12;
+      letter-spacing: -.035em;
+      font-weight: 650;
+    }
+    .intro {
+      margin: 0;
+      max-width: 680px;
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.55;
+    }
+    .progress {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 30px 0 18px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .progress-line {
+      width: 40px;
+      height: 2px;
+      background: #c8c8c8;
+    }
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 18px;
+      align-items: stretch;
+    }
+    .card-wrap { min-width: 0; perspective: 1100px; }
+    .flip-card {
+      position: relative;
+      display: block;
+      width: 100%;
+      min-height: calc(285px * var(--text-scale, 1));
+      padding: 0;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      color: inherit;
+      text-align: left;
+      background: transparent;
+      cursor: pointer;
+      transform-style: preserve-3d;
+      transition: transform .52s cubic-bezier(.2,.75,.25,1), box-shadow .2s ease, border-color .2s ease;
+    }
+    .flip-card { box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+    .flip-card:hover { box-shadow: 0 6px 16px rgba(0,0,0,.13); border-color: #d98282; }
+    .flip-card:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+    .flip-card.is-flipped { transform: rotateY(180deg); }
+    .face {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      padding: 22px;
+      border-radius: 7px;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+    }
+    .front { background: var(--surface); }
+    .back {
+      transform: rotateY(180deg);
+      background: var(--brand-soft);
+      border: 1px solid #edc5c4;
+    }
+    .card-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .step {
+      color: var(--brand-dark);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .055em;
+      text-transform: uppercase;
+    }
+    .icon {
+      display: grid;
+      place-items: center;
+      width: 30px;
+      height: 30px;
+      border-radius: 6px;
+      color: var(--brand-dark);
+      background: #fff1f0;
+      font-size: 16px;
+    }
+    .question {
+      margin: 30px 0 0;
+      font-size: 21px;
+      line-height: 1.35;
+      font-weight: 600;
+      letter-spacing: -.015em;
+    }
+    .answer-label {
+      margin: 25px 0 9px;
+      color: var(--brand-dark);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .055em;
+      text-transform: uppercase;
+    }
+    .answer {
+      margin: 0;
+      color: #333;
+      font-size: 16px;
+      line-height: 1.5;
+    }
+    .action {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: auto;
+      padding-top: 22px;
+      color: var(--brand-dark);
+      font-size: 14px;
+      font-weight: 600;
+    }
+    .action svg { flex: none; }
+    .footer-note {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      max-width: 760px;
+      margin-top: 22px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+    .footer-note .bulb { color: var(--teal); font-size: 17px; line-height: 1; }
+    [hidden] { display: none !important; }
+    body, .flip-card, .choice, .theme-toggle, .primary-button { transition: background-color .2s ease, color .2s ease, border-color .2s ease, box-shadow .2s ease; }
+    .page-head { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+    .theme-toggle { display: inline-flex; align-items: center; gap: 9px; min-height: 38px; padding: 4px 9px; border: 1px solid var(--line); border-radius: 6px; color: var(--ink); background: var(--surface); font: inherit; font-size: 13px; cursor: pointer; }
+    .theme-toggle:hover { background: var(--brand-soft); }
+    .toggle-track { width: 32px; height: 18px; padding: 2px; border-radius: 99px; background: #8a8886; }
+    .toggle-knob { display: block; width: 14px; height: 14px; border-radius: 50%; background: white; transition: transform .2s ease; }
+    body[data-theme="dark"] .toggle-track { background: var(--brand); }
+    body[data-theme="dark"] .toggle-knob { transform: translateX(14px); }
+    .screen { animation: screen-in .26s ease both; }
+    @keyframes screen-in { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: translateY(0); } }
+    .eyebrow { margin-top: 48px; color: var(--brand-dark); font-size: 12px; font-weight: 700; letter-spacing: .08em; }
+    .screen h1 { margin-top: 12px; }
+    .choice-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; max-width: 850px; margin-top: 34px; }
+    .choice { display: flex; align-items: center; gap: 16px; min-height: 132px; padding: 20px; border: 1px solid var(--line); border-radius: 8px; color: var(--ink); text-align: left; background: var(--surface); cursor: pointer; }
+    .choice:hover { border-color: var(--brand); background: var(--brand-soft); box-shadow: var(--shadow); }
+    .choice[aria-pressed="true"] { border: 2px solid var(--brand); padding: 19px; background: var(--brand-soft); box-shadow: 0 0 0 1px rgba(198,40,40,.10); }
+    .choice:focus-visible, .theme-toggle:focus-visible, .primary-button:focus-visible, .back-button:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+    .choice-icon { display: grid; place-items: center; flex: 0 0 44px; width: 44px; height: 44px; border-radius: 8px; color: var(--brand-dark); background: var(--brand-soft); font-size: 22px; }
+    .choice-copy { display: flex; flex-direction: column; gap: 6px; }
+    .choice-title { font-size: 17px; font-weight: 650; }
+    .choice-desc { color: var(--muted); font-size: 14px; line-height: 1.4; }
+    .choice-trailing { display: grid; place-items: center; flex: 0 0 26px; width: 26px; height: 26px; margin-left: auto; align-self: flex-start; color: var(--brand-dark); }
+    .hover-glyph, .selected-check { display: none; }
+    .choice:hover .hover-glyph { display: inline; font-size: 19px; }
+    .choice[aria-pressed="true"] .selected-check { display: inline; font-size: 18px; font-weight: 700; }
+    .choice[aria-pressed="true"] .hover-glyph { display: none; }
+    .choice-footer { display: flex; align-items: center; justify-content: space-between; gap: 16px; max-width: 850px; margin-top: 22px; }
+    .selection-hint { margin: 0; color: var(--muted); font-size: 14px; }
+    .primary-button { display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 42px; padding: 0 18px; border: 1px solid var(--brand); border-radius: 6px; color: white; background: var(--brand); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
+    .primary-button:hover:not(:disabled) { border-color: var(--brand-dark); background: var(--brand-dark); }
+    .primary-button:disabled { border-color: #d1d1d1; color: #707070; background: #e6e6e6; cursor: not-allowed; }
+    .screen-progress { max-width: 900px; margin-top: 34px; padding-top: 18px; border-top: 1px solid var(--line); color: var(--muted); font-size: 13px; }
+    .progress-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 10px; }
+    .progress-head strong { color: var(--ink); font-size: 15px; font-weight: 650; }
+    .progress-head span { font-size: 12px; }
+    .progress-track { width: 100%; height: 8px; overflow: hidden; border-radius: 99px; background: #dedede; }
+    .progress-fill { height: 100%; border-radius: inherit; background: var(--brand); transition: width .25s ease; }
+    .progress-stages { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; margin: 9px 0 0; padding: 0; list-style: none; color: var(--muted); font-size: 12px; }
+    .progress-stages li:nth-child(2), .progress-stages li:nth-child(3), .progress-stages li:nth-child(4) { text-align: center; }
+    .progress-stages li:last-child { text-align: right; }
+    .progress-stages .is-complete, .progress-stages .is-current { color: var(--brand-dark); font-weight: 650; }
+    .progress-stages .is-current { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 3px; }
+    body[data-theme="dark"] .progress-track { background: #484644; }
+    .back-button { margin-top: 18px; padding: 7px 0; border: 0; color: var(--brand-dark); background: transparent; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
+    .preference-note { margin: 18px 0 0; padding: 12px 14px; border-left: 3px solid var(--teal); color: var(--muted); background: var(--surface); font-size: 14px; line-height: 1.45; }
+    body[data-theme="dark"] { --ink: #f3f2f1; --muted: #c8c6c4; --line: #55514f; --canvas: #1b1a19; --surface: #292827; --brand: #c62828; --brand-dark: #ffb4ab; --brand-soft: #3d2524; --focus: #8cc7ff; --teal: #65d6cd; --shadow: 0 8px 28px rgba(0,0,0,.28); }
+    body[data-theme="dark"] .back { border-color: #744d4a; }
+    body[data-theme="dark"] .answer { color: #f3f2f1; }
+    body[data-theme="dark"] .choice-icon, body[data-theme="dark"] .icon { color: #ffb4ab; background: #462a29; }
+    body[data-theme="dark"] .primary-button:disabled { border-color: #484644; color: #969390; background: #343332; }
+    body.high-contrast:not([data-theme="dark"]) { --ink:#111; --muted:#292929; --line:#555; --canvas:#fff; --surface:#fff; --brand:#9b1c22; --brand-dark:#75151a; --brand-soft:#fff; --focus:#000; }
+    body[data-theme="dark"].high-contrast { --ink:#fff; --muted:#eee; --line:#bbb; --canvas:#000; --surface:#111; --brand:#c62828; --brand-dark:#ffb4ab; --brand-soft:#2a1717; --focus:#fff; }
+    body.high-contrast .choice, body.high-contrast .flip-card, body.high-contrast .theme-toggle, body.high-contrast .a11y-panel { border-color:var(--line); }
+    [hidden] { display:none !important; }
+    .a11y-dock { position:fixed; z-index:20; left:18px; bottom:18px; }
+    .a11y-launch { display:inline-flex; align-items:center; gap:9px; min-height:42px; padding:0 13px; border:1px solid var(--line); border-radius:6px; color:var(--ink); background:var(--surface); box-shadow:0 3px 12px rgba(0,0,0,.13); font:inherit; font-size:13px; font-weight:650; cursor:pointer; }
+    .a11y-launch:hover, .a11y-launch[aria-expanded="true"] { border-color:var(--brand); background:var(--brand-soft); }
+    .a11y-launch:focus-visible, .a11y-panel button:focus-visible, .speak-card:focus-visible { outline:3px solid var(--focus); outline-offset:3px; }
+    .a11y-icon { width:22px; height:22px; color:var(--brand-dark); }
+    .a11y-panel { position:absolute; left:0; bottom:52px; width:min(330px, calc(100vw - 36px)); max-height:calc(100vh - 90px); overflow:auto; padding:16px; border:1px solid var(--line); border-radius:7px; color:var(--ink); background:var(--surface); box-shadow:0 8px 28px rgba(0,0,0,.18); }
+    .a11y-head { display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:14px; }
+    .a11y-head strong { font-size:14px; }
+    .a11y-close { width:30px; height:30px; border:1px solid var(--line); border-radius:5px; color:var(--ink); background:var(--surface); font-size:18px; cursor:pointer; }
+    .a11y-row { display:flex; justify-content:space-between; align-items:center; gap:10px; padding:11px 0; border-top:1px solid var(--line); font-size:13px; font-weight:600; }
+    .size-controls { display:flex; gap:5px; }
+    .size-controls button, .a11y-action { min-height:34px; padding:0 10px; border:1px solid var(--line); border-radius:5px; color:var(--ink); background:var(--surface); font:inherit; font-size:12px; font-weight:650; cursor:pointer; }
+    .size-controls button:hover, .a11y-action:hover { border-color:var(--brand); background:var(--brand-soft); }
+    .a11y-action { display:flex; align-items:center; width:100%; gap:8px; margin-top:8px; text-align:left; }
+    .a11y-status { min-height:18px; margin:10px 0 0; color:var(--muted); font-size:12px; line-height:1.4; }
+    .a11y-explainer { margin:8px 0 0; color:var(--muted); font-size:11px; line-height:1.45; }
+    .card-wrap { display:flex; flex-direction:column; align-items:stretch; min-width:0; perspective:1100px; }
+    .speak-card { display:flex; align-items:center; align-self:flex-end; gap:6px; margin:6px 2px 0; padding:5px 7px; border:0; border-radius:4px; color:var(--brand-dark); background:transparent; font:inherit; font-size:12px; font-weight:600; cursor:pointer; }
+    .speak-card:hover { background:var(--brand-soft); text-decoration:underline; }
+    .speak-card svg { width:15px; height:15px; }
+    .a11y-dock { position:fixed; z-index:20; left:18px; bottom:18px; }
+    .a11y-launch { display:inline-flex; align-items:center; gap:9px; min-height:42px; padding:0 13px; border:1px solid var(--line); border-radius:6px; color:var(--ink); background:var(--surface); box-shadow:0 3px 12px rgba(0,0,0,.13); font:inherit; font-size:13px; font-weight:650; cursor:pointer; }
+    .a11y-launch:hover, .a11y-launch[aria-expanded="true"] { border-color:var(--brand); background:var(--brand-soft); }
+    .a11y-icon { width:22px; height:22px; color:var(--brand-dark); }
+    .a11y-panel { position:absolute; left:0; bottom:52px; width:min(330px, calc(100vw - 36px)); max-height:calc(100vh - 90px); overflow:auto; padding:16px; border:1px solid var(--line); border-radius:7px; color:var(--ink); background:var(--surface); box-shadow:0 8px 28px rgba(0,0,0,.18); }
+    .a11y-head { display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:14px; }
+    .a11y-head strong { font-size:14px; }
+    .a11y-close, .size-controls button { min-height:34px; border:1px solid var(--line); border-radius:5px; color:var(--ink); background:var(--surface); font:inherit; cursor:pointer; }
+    .a11y-close { width:34px; font-size:18px; }
+    .a11y-row { display:flex; justify-content:space-between; align-items:center; gap:10px; padding:11px 0; border-top:1px solid var(--line); font-size:13px; font-weight:600; }
+    .size-controls { display:flex; gap:5px; }
+    .size-controls button { padding:0 10px; font-size:12px; font-weight:650; }
+    .a11y-action { display:flex; align-items:center; width:100%; gap:8px; min-height:38px; margin-top:8px; padding:0 10px; border:1px solid var(--line); border-radius:5px; color:var(--ink); background:var(--surface); font:inherit; font-size:13px; font-weight:600; text-align:left; cursor:pointer; }
+    .size-controls button:hover, .a11y-action:hover, .a11y-close:hover { border-color:var(--brand); background:var(--brand-soft); }
+    .a11y-launch:focus-visible, .a11y-panel button:focus-visible, .speak-card:focus-visible { outline:3px solid var(--focus); outline-offset:3px; }
+    .a11y-status { min-height:18px; margin:10px 0 0; color:var(--muted); font-size:12px; line-height:1.45; }
+    .a11y-explainer { margin:8px 0 0; color:var(--muted); font-size:11px; line-height:1.45; }
+    .speak-card { display:flex; align-items:center; align-self:flex-end; gap:6px; margin:6px 2px 0; padding:5px 7px; border:0; border-radius:4px; color:var(--brand-dark); background:transparent; font:inherit; font-size:12px; font-weight:600; cursor:pointer; }
+    .speak-card:hover { background:var(--brand-soft); text-decoration:underline; }
+    .speak-card svg { flex:none; width:15px; height:15px; }
+    body.high-contrast:not([data-theme="dark"]) { --ink:#111; --muted:#292929; --line:#555; --canvas:#fff; --surface:#fff; --brand:#9b1c22; --brand-dark:#75151a; --brand-soft:#fff; --focus:#000; }
+    body[data-theme="dark"].high-contrast { --ink:#fff; --muted:#eee; --line:#bbb; --canvas:#000; --surface:#111; --brand:#c62828; --brand-dark:#ffb4ab; --brand-soft:#2a1717; --focus:#fff; }
+    body.high-contrast .choice, body.high-contrast .flip-card, body.high-contrast .a11y-panel { border-color:var(--line); }
+    @media (max-width: 760px) {
+      .page { width: min(560px, calc(100% - 32px)); padding-top: 28px; }
+      h1 { margin-top: 28px; }
+      .choice-grid { grid-template-columns: 1fr; gap: 12px; margin-top: 24px; }
+      .choice { min-height: 108px; }
+      .choice-footer { align-items: stretch; flex-direction: column; }
+      .primary-button { width: 100%; }
+      .cards { grid-template-columns: 1fr; gap: 14px; }
+      .flip-card { min-height: calc(230px * var(--text-scale, 1)); }
+      .question { margin-top: 24px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="page-head"><div class="topline"><span class="mark" aria-hidden="true">D</span><nav aria-label="Brotkrumen"><ol class="breadcrumbs"><li><a href="#start" id="breadcrumb-root">Data Literacy</a><span class="breadcrumb-separator" aria-hidden="true">›</span></li><li><span class="breadcrumb-current" id="breadcrumb-current" aria-current="page">Einstieg</span></li></ol></nav></div><button class="theme-toggle" id="theme-toggle" type="button" aria-pressed="false" aria-label="Dunkles Design aktivieren"><span id="theme-symbol" aria-hidden="true">☾</span><span id="theme-label">Hell</span><span class="toggle-track" aria-hidden="true"><span class="toggle-knob"></span></span></button></header>
+    <section class="screen" id="screen-start" aria-labelledby="start-title">
+      <div class="eyebrow">DEIN LERNSTART</div>
+      <h1 id="start-title" tabindex="-1">Wie möchtest du starten?</h1>
+      <p class="intro">Du entscheidest, wie du dich dem Thema näherst. Beide Wege führen dich zu einer kurzen Übung.</p>
+      <div class="choice-grid" role="group" aria-label="Wähle deinen Start">
+        <button class="choice" type="button" data-choice="orient" aria-pressed="false"><span class="choice-icon" aria-hidden="true">◷</span><span class="choice-copy"><span class="choice-title">Erst kurz orientieren</span><span class="choice-desc">Ein Leitgedanke gibt dir den Rahmen für die Übung.</span></span><span class="choice-trailing" aria-hidden="true"><span class="hover-glyph">↗</span><span class="selected-check">✓</span></span></button>
+        <button class="choice" type="button" data-choice="direct" aria-pressed="false"><span class="choice-icon" aria-hidden="true">↗</span><span class="choice-copy"><span class="choice-title">Direkt in die Übung</span><span class="choice-desc">Starte sofort mit drei Fragen zum Umgang mit Daten.</span></span><span class="choice-trailing" aria-hidden="true"><span class="hover-glyph">↗</span><span class="selected-check">✓</span></span></button>
+      </div>
+      <div class="choice-footer"><p class="selection-hint" id="selection-hint" aria-live="polite">Wähle eine Möglichkeit, um weiterzugehen.</p><button class="primary-button" id="start-next" type="button" disabled>Weiter zur Übung <span aria-hidden="true">→</span></button></div>
+      <div class="screen-progress" aria-label="Lernfortschritt: Schritt 1 von 5, 20 Prozent abgeschlossen">
+        <div class="progress-head"><strong>Schritt 1 von 5</strong><span>20 % abgeschlossen</span></div>
+        <div class="progress-track" role="progressbar" aria-label="Lernfortschritt" aria-valuemin="0" aria-valuemax="5" aria-valuenow="1"><div class="progress-fill" style="width:20%"></div></div>
+        <ol class="progress-stages" aria-label="Lernabschnitte"><li class="is-current" aria-current="step">Start</li><li>Übung</li><li>Prüfen</li><li>Reflektieren</li><li>Ziel</li></ol>
+      </div>
+    </section>
+    <section class="screen" id="screen-exercise" aria-labelledby="exercise-title" hidden>
+    <h1 id="exercise-title" tabindex="-1">Daten lesen heißt Fragen stellen.</h1>
+    <p class="intro">Bevor du aus Daten eine Schlussfolgerung ziehst: Halte kurz inne. Welche Fragen helfen dir, die Aussage richtig einzuordnen?</p>
+    <p class="preference-note" id="preference-note" hidden></p>
+
+    <div class="progress" aria-label="Lernabschnitt">
+      <span>3 Impulse</span><span class="progress-line" aria-hidden="true"></span><span>Zum Entdecken anklicken</span>
+    </div>
+
+    <section class="cards" aria-label="Drei Fragen zur Dateninterpretation">
+      <div class="card-wrap">
+        <button class="flip-card" type="button" aria-pressed="false" aria-label="Schritt 1: Frage anzeigen. Was fällt dir an den Zahlen zuerst auf?">
+          <span class="face front" aria-hidden="true">
+            <span class="card-meta"><span class="step">Schritt 1</span><span class="icon">?</span></span>
+            <span class="question">Was fällt dir an den Zahlen zuerst auf?</span>
+            <span class="action">Antwort ansehen <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8h9M8 4l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          </span>
+          <span class="face back" aria-hidden="true">
+            <span class="card-meta"><span class="step">Schritt 1 · Beispielantwort</span><span class="icon">✓</span></span>
+            <span class="answer-label">Erst beobachten</span>
+            <span class="answer">Achte auf auffällige Werte, Unterschiede und Entwicklungen – noch ohne sie direkt zu erklären.</span>
+            <span class="action">Zur Frage zurück</span>
+          </span>
+        </button>
+        <button class="speak-card" type="button" aria-label="Diese Karte vorlesen"><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M3 8v4h3l4 3V5L6 8H3Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M13 7.5a3.5 3.5 0 0 1 0 5M15 5.5a6.5 6.5 0 0 1 0 9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span>Vorlesen</span></button>
+      </div>
+      <div class="card-wrap">
+        <button class="flip-card" type="button" aria-pressed="false" aria-label="Schritt 2: Frage anzeigen. Welche Aussage lässt sich aus den Daten wirklich ableiten?">
+          <span class="face front" aria-hidden="true">
+            <span class="card-meta"><span class="step">Schritt 2</span><span class="icon">?</span></span>
+            <span class="question">Welche Aussage lässt sich aus den Daten wirklich ableiten?</span>
+            <span class="action">Antwort ansehen <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8h9M8 4l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          </span>
+          <span class="face back" aria-hidden="true">
+            <span class="card-meta"><span class="step">Schritt 2 · Beispielantwort</span><span class="icon">✓</span></span>
+            <span class="answer-label">Aussage prüfen</span>
+            <span class="answer">Trenne, was die Daten tatsächlich zeigen, von dem, was du nur vermutest.</span>
+            <span class="action">Zur Frage zurück</span>
+          </span>
+        </button>
+        <button class="speak-card" type="button" aria-label="Diese Karte vorlesen"><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M3 8v4h3l4 3V5L6 8H3Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M13 7.5a3.5 3.5 0 0 1 0 5M15 5.5a6.5 6.5 0 0 1 0 9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span>Vorlesen</span></button>
+      </div>
+      <div class="card-wrap">
+        <button class="flip-card" type="button" aria-pressed="false" aria-label="Schritt 3: Frage anzeigen. Welche Information fehlt für eine sichere Entscheidung?">
+          <span class="face front" aria-hidden="true">
+            <span class="card-meta"><span class="step">Schritt 3</span><span class="icon">?</span></span>
+            <span class="question">Welche Information fehlt für eine sichere Entscheidung?</span>
+            <span class="action">Antwort ansehen <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8h9M8 4l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          </span>
+          <span class="face back" aria-hidden="true">
+            <span class="card-meta"><span class="step">Schritt 3 · Beispielantwort</span><span class="icon">✓</span></span>
+            <span class="answer-label">Kontext ergänzen</span>
+            <span class="answer">Prüfe zum Beispiel Zeitraum, Vergleichswerte und Datenquelle, bevor du entscheidest.</span>
+            <span class="action">Zur Frage zurück</span>
+          </span>
+        </button>
+        <button class="speak-card" type="button" aria-label="Diese Karte vorlesen"><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M3 8v4h3l4 3V5L6 8H3Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M13 7.5a3.5 3.5 0 0 1 0 5M15 5.5a6.5 6.5 0 0 1 0 9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span>Vorlesen</span></button>
+      </div>
+    </section>
+    <p class="footer-note"><span class="bulb" aria-hidden="true">✦</span><span><strong>Merke:</strong> Eine gute Datenentscheidung beginnt nicht mit einer schnellen Antwort, sondern mit der richtigen Frage.</span></p>
+    <div class="screen-progress" aria-label="Lernfortschritt: Schritt 2 von 5, 40 Prozent abgeschlossen">
+      <div class="progress-head"><strong>Schritt 2 von 5</strong><span>40 % abgeschlossen</span></div>
+      <div class="progress-track" role="progressbar" aria-label="Lernfortschritt" aria-valuemin="0" aria-valuemax="5" aria-valuenow="2"><div class="progress-fill" style="width:40%"></div></div>
+      <ol class="progress-stages" aria-label="Lernabschnitte"><li class="is-complete">Start</li><li class="is-current" aria-current="step">Übung</li><li>Prüfen</li><li>Reflektieren</li><li>Ziel</li></ol>
+    </div>
+    <button class="back-button" id="back-start" type="button">← Zurück zur Auswahl</button>
+    </section>
+    <aside class="a11y-dock" aria-label="Barrierefreiheit">
+      <button class="a11y-launch" id="a11y-launch" type="button" aria-expanded="false" aria-controls="a11y-panel"><svg class="a11y-icon" viewBox="0 0 32 32" fill="none" aria-hidden="true"><circle cx="16" cy="16" r="14.5" stroke="currentColor" stroke-width="1.8"/><circle cx="16" cy="8" r="3.2" stroke="currentColor" stroke-width="1.8"/><path d="M6.5 13.8h19M16 11.3v8m0 0-6 9m6-9 6 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Barrierefreiheit</span></button>
+      <section class="a11y-panel" id="a11y-panel" aria-label="Ansicht anpassen" hidden>
+        <div class="a11y-head"><strong>Ansicht anpassen</strong><button class="a11y-close" id="a11y-close" type="button" aria-label="Einstellungen schließen">×</button></div>
+        <div class="a11y-row"><span>Textgröße</span><span class="size-controls"><button id="text-smaller" type="button" aria-label="Text verkleinern">A−</button><button id="text-reset" type="button" aria-label="Textgröße zurücksetzen">A</button><button id="text-larger" type="button" aria-label="Text vergrößern">A+</button></span></div>
+        <button class="a11y-action" id="contrast-toggle" type="button" aria-pressed="false"><span aria-hidden="true">◐</span><span>Kontrast erhöhen</span></button>
+        <p class="a11y-status" id="a11y-status" aria-live="polite">Textgröße und Kontrast lassen sich hier anpassen.</p>
+        <p class="a11y-explainer">Zum Vorlesen gibt es eine eigene Schaltfläche unter jeder Karte. Bedienbar per Tastatur: Tab, Enter und Leertaste.</p>
+      </section>
+    </aside>
+  </main>
+  <script>
+    const startScreen = document.getElementById('screen-start');
+    const exerciseScreen = document.getElementById('screen-exercise');
+    const startNext = document.getElementById('start-next');
+    const selectionHint = document.getElementById('selection-hint');
+    const preferenceNote = document.getElementById('preference-note');
+    let selectedStart = null;
+
+    document.querySelectorAll('.choice').forEach((choice) => {
+      choice.addEventListener('click', () => {
+        document.querySelectorAll('.choice').forEach((item) => item.setAttribute('aria-pressed', 'false'));
+        choice.setAttribute('aria-pressed', 'true');
+        selectedStart = choice.dataset.choice;
+        startNext.disabled = false;
+        selectionHint.textContent = selectedStart === 'orient'
+          ? 'Gute Wahl – du startest mit einem kurzen Leitgedanken.'
+          : 'Gute Wahl – du springst direkt in die Fragen.';
+      });
+    });
+
+    function showExercise() {
+      startScreen.hidden = true;
+      exerciseScreen.hidden = false;
+      document.getElementById('breadcrumb-current').textContent = 'Kurzübung';
+      preferenceNote.hidden = false;
+      preferenceNote.textContent = selectedStart === 'orient'
+        ? 'Dein Einstieg: Behalte den Merksatz unten im Blick und öffne dann die Karten – erst beobachten, dann interpretieren.'
+        : 'Du startest direkt mit den drei Fragen. Tippe eine Karte an, um eine Beispielantwort zu sehen.';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      document.getElementById('exercise-title').focus?.();
+    }
+
+    startNext.addEventListener('click', showExercise);
+    document.getElementById('back-start').addEventListener('click', () => {
+      exerciseScreen.hidden = true;
+      startScreen.hidden = false;
+      document.getElementById('breadcrumb-current').textContent = 'Einstieg';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      document.getElementById('start-title').focus();
+    });
+    document.getElementById('breadcrumb-root').addEventListener('click', (event) => {
+      event.preventDefault();
+      exerciseScreen.hidden = true;
+      startScreen.hidden = false;
+      document.getElementById('breadcrumb-current').textContent = 'Einstieg';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      document.getElementById('start-title').focus();
+    });
+
+    document.querySelectorAll('.flip-card').forEach((card, index) => {
+      card.addEventListener('click', () => {
+        const flipped = card.classList.toggle('is-flipped');
+        card.setAttribute('aria-pressed', String(flipped));
+        const step = index + 1;
+        const question = card.querySelector('.face.front .question').textContent.trim();
+        const answerLabel = card.querySelector('.face.back .answer-label').textContent.trim();
+        const answer = card.querySelector('.face.back .answer').textContent.trim();
+        card.setAttribute('aria-label', flipped
+          ? `Schritt ${step}. Frage: ${question}. Beispielantwort: ${answerLabel}. ${answer} Zum Zurückwechseln aktivieren.`
+          : `Schritt ${step}. Frage: ${question}. Aktivieren, um die Beispielantwort anzuzeigen.`);
+      });
+    });
+
+    document.getElementById('theme-toggle').addEventListener('click', (event) => {
+      const button = event.currentTarget;
+      const dark = document.body.dataset.theme !== 'dark';
+      document.body.dataset.theme = dark ? 'dark' : 'light';
+      button.setAttribute('aria-pressed', String(dark));
+      button.setAttribute('aria-label', dark ? 'Helles Design aktivieren' : 'Dunkles Design aktivieren');
+      document.getElementById('theme-label').textContent = dark ? 'Dunkel' : 'Hell';
+      document.getElementById('theme-symbol').textContent = dark ? '☀' : '☾';
+    });
+
+    const a11yLaunch = document.getElementById('a11y-launch');
+    const a11yPanel = document.getElementById('a11y-panel');
+    const a11yStatus = document.getElementById('a11y-status');
+    const closeA11yPanel = () => { a11yPanel.hidden = true; a11yLaunch.setAttribute('aria-expanded', 'false'); a11yLaunch.focus(); };
+    a11yLaunch.addEventListener('click', () => {
+      const opening = a11yPanel.hidden;
+      a11yPanel.hidden = !opening;
+      a11yLaunch.setAttribute('aria-expanded', String(opening));
+      if (opening) document.getElementById('text-larger').focus();
+    });
+    document.getElementById('a11y-close').addEventListener('click', closeA11yPanel);
+    document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && !a11yPanel.hidden) closeA11yPanel(); });
+
+    const textTargets = Array.from(document.querySelectorAll('.page, .page *'));
+    const originalFontSizes = new Map(textTargets.map((element) => [element, parseFloat(getComputedStyle(element).fontSize)]));
+    function setTextSize(scale, label) {
+      document.body.style.setProperty('--text-scale', String(scale));
+      textTargets.forEach((element) => { element.style.fontSize = `${originalFontSizes.get(element) * scale}px`; });
+      a11yStatus.textContent = `Textgröße: ${label}. Text bricht um; die Karten erhalten mehr Höhe.`;
+    }
+    document.getElementById('text-smaller').addEventListener('click', () => setTextSize(.9, 'klein'));
+    document.getElementById('text-reset').addEventListener('click', () => setTextSize(1, 'Standard'));
+    document.getElementById('text-larger').addEventListener('click', () => setTextSize(1.2, 'groß'));
+
+    const contrastToggle = document.getElementById('contrast-toggle');
+    contrastToggle.addEventListener('click', () => {
+      const enabled = document.body.classList.toggle('high-contrast');
+      contrastToggle.setAttribute('aria-pressed', String(enabled));
+      contrastToggle.querySelector('span:last-child').textContent = enabled ? 'Kontrast zurücksetzen' : 'Kontrast erhöhen';
+      a11yStatus.textContent = enabled ? 'Erhöhter Kontrast ist aktiviert.' : 'Standardkontrast ist wieder aktiviert.';
+    });
+
+    let activeSpeech = null;
+    let activeSpeakButton = null;
+    function resetSpeakButton(button) {
+      if (!button) return;
+      button.setAttribute('aria-pressed', 'false');
+      button.querySelector('span').textContent = 'Vorlesen';
+    }
+    document.querySelectorAll('.speak-card').forEach((button, index) => {
+      button.setAttribute('aria-label', `Schritt ${index + 1} vorlesen`);
+      button.setAttribute('aria-pressed', 'false');
+      button.addEventListener('click', () => {
+        if (!('speechSynthesis' in window) || !('SpeechSynthesisUtterance' in window)) {
+          button.querySelector('span').textContent = 'Nicht verfügbar';
+          a11yStatus.textContent = 'Vorlesen wird von diesem Browser nicht unterstützt.';
+          window.setTimeout(() => { button.querySelector('span').textContent = 'Vorlesen'; }, 2500);
+          return;
+        }
+        if (activeSpeakButton === button && activeSpeech) {
+          window.speechSynthesis.cancel();
+          resetSpeakButton(activeSpeakButton);
+          activeSpeech = null;
+          activeSpeakButton = null;
+          a11yStatus.textContent = 'Vorlesen gestoppt.';
+          return;
+        }
+        if (activeSpeech) window.speechSynthesis.cancel();
+        resetSpeakButton(activeSpeakButton);
+        const card = button.parentElement.querySelector('.flip-card');
+        const face = card.classList.contains('is-flipped') ? card.querySelector('.face.back') : card.querySelector('.face.front');
+        const parts = [face.querySelector('.card-meta')?.textContent, face.querySelector('.answer-label')?.textContent, face.querySelector('.question')?.textContent, face.querySelector('.answer')?.textContent].filter(Boolean);
+        const utterance = new SpeechSynthesisUtterance(parts.join('. '));
+        utterance.lang = 'de-DE';
+        activeSpeech = utterance;
+        activeSpeakButton = button;
+        button.setAttribute('aria-pressed', 'true');
+        button.querySelector('span').textContent = 'Vorlesen stoppen';
+        a11yStatus.textContent = `Schritt ${index + 1} wird vorgelesen.`;
+        utterance.onend = () => {
+          if (activeSpeech !== utterance) return;
+          resetSpeakButton(activeSpeakButton);
+          activeSpeech = null;
+          activeSpeakButton = null;
+          a11yStatus.textContent = 'Vorlesen beendet.';
+        };
+        utterance.onerror = () => {
+          if (activeSpeech !== utterance) return;
+          resetSpeakButton(activeSpeakButton);
+          activeSpeech = null;
+          activeSpeakButton = null;
+          a11yStatus.textContent = 'Vorlesen konnte nicht gestartet werden.';
+        };
+        window.speechSynthesis.speak(utterance);
+      });
+    });
+  </script>
+</body>
+</html>
