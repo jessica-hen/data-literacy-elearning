@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light">
-  <title>Data Literacy – Fragenkarten</title>
+  <title>Data Literacy – interaktive Beispielscreens</title>
   <style>
     :root {
       --ink: #242424;
@@ -29,7 +29,7 @@
       background: var(--canvas);
     }
     .page {
-      width: min(1120px, calc(100% - 48px));
+      width: min(1200px, calc(100% - 48px));
       margin: 0 auto;
       padding: 42px 0 56px;
     }
@@ -209,6 +209,7 @@
     .choice[aria-pressed="true"] { border: 2px solid var(--brand); padding: 19px; background: var(--brand-soft); box-shadow: 0 0 0 1px rgba(198,40,40,.10); }
     .choice:focus-visible, .theme-toggle:focus-visible, .primary-button:focus-visible, .back-button:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
     .choice-icon { display: grid; place-items: center; flex: 0 0 44px; width: 44px; height: 44px; border-radius: 8px; color: var(--brand-dark); background: var(--brand-soft); font-size: 22px; }
+    .choice-icon svg { width: 26px; height: 26px; display: block; }
     .choice-copy { display: flex; flex-direction: column; gap: 6px; }
     .choice-title { font-size: 17px; font-weight: 650; }
     .choice-desc { color: var(--muted); font-size: 14px; line-height: 1.4; }
@@ -229,6 +230,13 @@
     .progress-track { width: 100%; height: 8px; overflow: hidden; border-radius: 99px; background: #dedede; }
     .progress-fill { height: 100%; border-radius: inherit; background: var(--brand); transition: width .25s ease; }
     .progress-stages { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; margin: 9px 0 0; padding: 0; list-style: none; color: var(--muted); font-size: 12px; }
+    .stage-link { display: inline; padding: 0; border: 0; color: inherit; background: transparent; font: inherit; text-align: left; text-decoration: none; cursor: pointer; }
+    .stage-link:not(:disabled) { text-decoration: underline; text-decoration-style: dotted; text-underline-offset: 3px; }
+    .stage-link:not(:disabled):hover { color: var(--brand-dark); text-decoration-style: solid; }
+    .stage-link:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: 2px; }
+    .stage-link:disabled { color: inherit; cursor: default; opacity: 1; }
+    .progress-stages li.is-complete .stage-link { color: var(--brand-dark); font-weight: 600; }
+    .progress-stages li.is-current .stage-link { color: var(--ink); font-weight: 700; }
     .progress-stages li:nth-child(2), .progress-stages li:nth-child(3), .progress-stages li:nth-child(4) { text-align: center; }
     .progress-stages li:last-child { text-align: right; }
     .progress-stages .is-complete, .progress-stages .is-current { color: var(--brand-dark); font-weight: 650; }
@@ -299,6 +307,62 @@
       .flip-card { min-height: calc(230px * var(--text-scale, 1)); }
       .question { margin-top: 24px; }
     }
+    .check-screen { margin-top: 18px; }
+    .chart-panel { margin: 22px 0; padding: 20px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+    .chart-title { margin: 0 0 4px; font-size: 18px; font-weight: 650; }
+    .chart-caption { margin: 0 0 16px; color: var(--muted); font-size: 13px; }
+    .chart-svg { display: block; width: 100%; height: auto; max-height: 240px; }
+    .answer-options { display: grid; gap: 10px; margin: 18px 0; }
+    .answer-option { width: 100%; padding: 15px 18px; border: 1px solid var(--line); border-radius: 6px; color: var(--ink); background: var(--surface); text-align: left; font: inherit; cursor: pointer; }
+    .answer-option:hover { border-color: var(--brand); background: var(--brand-soft); }
+    .answer-option:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+    .answer-option[aria-pressed="true"] { border: 2px solid var(--brand); background: var(--brand-soft); }
+    .answer-option.is-correct { border-color: #107c10; background: #f1faf1; }
+    .answer-option.is-incorrect { border-color: #b10e1c; background: #fff4f4; }
+    .feedback-box { margin: 16px 0; padding: 16px 18px; border-left: 4px solid var(--teal); border-radius: 4px; background: var(--surface); line-height: 1.5; }
+    .feedback-box[data-state="incorrect"] { border-left-color: #b10e1c; }
+    .feedback-box strong { display: block; margin-bottom: 4px; }
+    .feedback-dialog { width:min(480px, calc(100% - 32px)); padding:0; border:1px solid var(--line); border-radius:10px; color:var(--ink); background:var(--surface); box-shadow:0 18px 56px rgba(0,0,0,.25); }
+    .feedback-dialog::backdrop { background:rgba(20,24,27,.48); backdrop-filter:blur(2px); }
+    .feedback-content { padding:26px; }
+    .feedback-heading { display:flex; align-items:center; gap:14px; margin-bottom:16px; }
+    .feedback-symbol { display:grid; place-items:center; flex:none; width:42px; height:42px; border-radius:50%; font-size:23px; font-weight:700; }
+    .feedback-dialog[data-state="correct"] .feedback-symbol { color:#0b6a0b; background:#e7f5e7; border:1px solid #107c10; }
+    .feedback-dialog[data-state="incorrect"] .feedback-symbol { color:#a4262c; background:#fde7e9; border:1px solid #b10e1c; }
+    .feedback-heading h2 { margin:0; font-size:22px; line-height:1.25; }
+    .feedback-copy { margin:0; color:var(--muted); line-height:1.55; }
+    .feedback-dialog-actions { display:flex; justify-content:flex-end; gap:10px; margin-top:24px; }
+    .feedback-dialog-actions button { min-height:42px; }
+    body[data-theme="dark"] .feedback-dialog[data-state="correct"] .feedback-symbol { color:#a7e3a5; background:#193319; border-color:#6abf69; }
+    body[data-theme="dark"] .feedback-dialog[data-state="incorrect"] .feedback-symbol { color:#ffb4ab; background:#3a2022; border-color:#ff7b72; }
+    .help-anchor { position: relative; display: inline-flex; min-width: 0; }
+    .help-anchor:focus { outline: none; }
+    .help-anchor:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; border-radius: 4px; }
+    .help-anchor .help-tooltip { position: absolute; z-index: 30; left: 50%; bottom: calc(100% + 8px); width: max-content; max-width: 260px; padding: 9px 12px; border-radius: 6px; color: #fff; background: #292929; box-shadow: 0 4px 12px rgba(0,0,0,.22); font-size: 13px; font-weight: 400; line-height: 1.4; text-align: left; white-space: normal; transform: translateX(-50%); visibility: hidden; opacity: 0; pointer-events: none; transition: opacity .15s ease; }
+    .help-anchor[data-disabled="true"]:hover .help-tooltip, .help-anchor[data-disabled="true"]:focus .help-tooltip { visibility: visible; opacity: 1; }
+    .screen-nav .help-anchor { flex: 0 0 150px; }
+    .screen-nav .help-anchor .primary-button { width: 100%; min-width: 0; }
+    .progress-stages .help-anchor { vertical-align: baseline; }
+    .progress-stages .help-tooltip { left: 0; transform: none; }
+    .orientation-dialog { width: min(560px, calc(100% - 32px)); max-height: min(80vh, 680px); padding: 0; border: 1px solid var(--line); border-radius: 12px; color: var(--ink); background: var(--surface); box-shadow: 0 18px 56px rgba(0,0,0,.25); }
+    .orientation-dialog::backdrop { background: rgba(20,24,27,.48); backdrop-filter: blur(2px); }
+    .orientation-content { padding: 30px; }
+    .orientation-content h2 { margin: 12px 0 12px; font-size: 28px; line-height: 1.2; }
+    .orientation-content p { margin: 0 0 16px; color: var(--muted); line-height: 1.55; }
+    .orientation-prompt { padding: 16px; border-left: 4px solid var(--brand); border-radius: 4px; background: var(--brand-soft); color: var(--ink) !important; }
+    .orientation-list { margin: 0; padding-left: 22px; color: var(--ink); line-height: 1.65; }
+    .orientation-actions { display: flex; justify-content: space-between; gap: 12px; margin-top: 26px; }
+    .orientation-actions button { min-height: 44px; }
+    .orientation-actions .back-button { margin-right: auto; }
+    .orientation-actions .primary-button { margin-left: auto; }
+    .screen-nav { position: static; display: flex; justify-content: space-between; align-items: center; gap: 12px; width: 100%; min-height: 58px; margin: 22px 0 0; padding: 10px 0; border-top: 1px solid var(--line); background: transparent; }
+    .screen-nav .back-button { margin-right: auto; }
+    .screen-nav .primary-button { margin-left: auto; }
+    .screen-nav > .back-button, .screen-nav > .primary-button { min-width: 150px; }
+    .scenario-note { margin: 18px 0; padding: 14px 16px; border-left: 4px solid var(--brand); border-radius: 4px; background: var(--surface); color: var(--ink); line-height: 1.5; }
+    .completion-note { margin: 14px 0; padding: 14px 16px; border-left: 4px solid var(--teal); border-radius: 4px; background: var(--surface); line-height: 1.5; }
+    .page { padding-bottom: 56px; }
+    @media (max-width: 760px) { .screen-nav { width: calc(100vw - 32px); } }
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; }
     }
@@ -306,25 +370,27 @@
 </head>
 <body>
   <main class="page">
-    <header class="page-head"><div class="topline"><span class="mark" aria-hidden="true">D</span><nav aria-label="Brotkrumen"><ol class="breadcrumbs"><li><a href="#start" id="breadcrumb-root">Data Literacy</a><span class="breadcrumb-separator" aria-hidden="true">›</span></li><li><span class="breadcrumb-current" id="breadcrumb-current" aria-current="page">Einstieg</span></li></ol></nav></div><button class="theme-toggle" id="theme-toggle" type="button" aria-pressed="false" aria-label="Dunkles Design aktivieren"><span id="theme-symbol" aria-hidden="true">☾</span><span id="theme-label">Hell</span><span class="toggle-track" aria-hidden="true"><span class="toggle-knob"></span></span></button></header>
+    <header class="page-head"><div class="topline"><span class="mark" aria-hidden="true">D</span><nav aria-label="Brotkrumen"><ol class="breadcrumbs"><li><a href="#start" id="breadcrumb-root">Data Literacy</a><span class="breadcrumb-separator" aria-hidden="true">›</span></li><li><span class="breadcrumb-current" id="breadcrumb-current" aria-current="page">Start</span></li></ol></nav></div><button class="theme-toggle" id="theme-toggle" type="button" aria-pressed="false" aria-label="Dunkles Design aktivieren"><span id="theme-symbol" aria-hidden="true">☾</span><span id="theme-label">Hell</span><span class="toggle-track" aria-hidden="true"><span class="toggle-knob"></span></span></button></header>
     <section class="screen" id="screen-start" aria-labelledby="start-title">
       <div class="eyebrow">DEIN LERNSTART</div>
       <h1 id="start-title" tabindex="-1">Wie möchtest du starten?</h1>
       <p class="intro">Du entscheidest, wie du dich dem Thema näherst. Beide Wege führen dich zu einer kurzen Übung.</p>
       <div class="choice-grid" role="group" aria-label="Wähle deinen Start">
-        <button class="choice" type="button" data-choice="orient" aria-pressed="false"><span class="choice-icon" aria-hidden="true">◷</span><span class="choice-copy"><span class="choice-title">Erst kurz orientieren</span><span class="choice-desc">Ein Leitgedanke gibt dir den Rahmen für die Übung.</span></span><span class="choice-trailing" aria-hidden="true"><span class="hover-glyph">↗</span><span class="selected-check">✓</span></span></button>
-        <button class="choice" type="button" data-choice="direct" aria-pressed="false"><span class="choice-icon" aria-hidden="true">↗</span><span class="choice-copy"><span class="choice-title">Direkt in die Übung</span><span class="choice-desc">Starte sofort mit drei Fragen zum Umgang mit Daten.</span></span><span class="choice-trailing" aria-hidden="true"><span class="hover-glyph">↗</span><span class="selected-check">✓</span></span></button>
+        <button class="choice" type="button" data-choice="orient" aria-pressed="false"><span class="choice-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M6 3.75h8l4 4V20a.75.75 0 0 1-.75.75h-10.5A.75.75 0 0 1 6 20V3.75Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M14 3.75V8h4M9 12h6M9 15.5h6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></span><span class="choice-copy"><span class="choice-title">Erst kurz orientieren</span><span class="choice-desc">Ein Leitgedanke gibt dir den Rahmen für die Übung.</span></span><span class="choice-trailing" aria-hidden="true"><span class="hover-glyph">↗</span><span class="selected-check">✓</span></span></button>
+        <button class="choice" type="button" data-choice="direct" aria-pressed="false"><span class="choice-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M5 9v6M8 7v10M16 7v10M19 9v6M8 12h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M3.5 9v6M20.5 9v6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></span><span class="choice-copy"><span class="choice-title">Direkt in die Übung</span><span class="choice-desc">Starte sofort mit drei Fragen zum Umgang mit Daten.</span></span><span class="choice-trailing" aria-hidden="true"><span class="hover-glyph">↗</span><span class="selected-check">✓</span></span></button>
       </div>
-      <div class="choice-footer"><p class="selection-hint" id="selection-hint" aria-live="polite">Wähle eine Möglichkeit, um weiterzugehen.</p><button class="primary-button" id="start-next" type="button" disabled>Weiter zur Übung <span aria-hidden="true">→</span></button></div>
+      <div class="choice-footer"><p class="selection-hint" id="selection-hint" aria-live="polite">Wähle eine Möglichkeit, um weiterzugehen.</p></div>
       <div class="screen-progress" aria-label="Lernfortschritt: Schritt 1 von 5, 20 Prozent abgeschlossen">
         <div class="progress-head"><strong>Schritt 1 von 5</strong><span>20 % abgeschlossen</span></div>
         <div class="progress-track" role="progressbar" aria-label="Lernfortschritt" aria-valuemin="0" aria-valuemax="5" aria-valuenow="1"><div class="progress-fill" style="width:20%"></div></div>
-        <ol class="progress-stages" aria-label="Lernabschnitte"><li class="is-current" aria-current="step">Start</li><li>Übung</li><li>Prüfen</li><li>Reflektieren</li><li>Ziel</li></ol>
+        <ol class="progress-stages" aria-label="Lernabschnitte"><li class="is-current" aria-current="step"><button class="stage-link" type="button" data-go="start" disabled>Start</button></li><li><button class="stage-link" type="button" data-go="exercise" disabled>Übung</button></li><li><button class="stage-link" type="button" data-go="check" disabled>Prüfen</button></li><li><button class="stage-link" type="button" disabled>Reflektieren</button></li><li><button class="stage-link" type="button" disabled>Ziel</button></li></ol>
       </div>
+      <div class="screen-nav"><span aria-hidden="true"></span><button class="primary-button" id="start-next" type="button" disabled>Weiter <span aria-hidden="true">→</span></button></div>
     </section>
     <section class="screen" id="screen-exercise" aria-labelledby="exercise-title" hidden>
     <h1 id="exercise-title" tabindex="-1">Daten lesen heißt Fragen stellen.</h1>
     <p class="intro">Bevor du aus Daten eine Schlussfolgerung ziehst: Halte kurz inne. Welche Fragen helfen dir, die Aussage richtig einzuordnen?</p>
+    <div class="scenario-note"><strong>Beispiel aus dem Vertriebsalltag:</strong> Ein Dashboard zeigt die Entwicklung der Photovoltaik-Aufträge. Bevor du den Trend in einer Präsentation bewertest, prüfe zuerst, was die Daten tatsächlich aussagen und welcher Kontext noch fehlt.</div>
     <p class="preference-note" id="preference-note" hidden></p>
 
     <div class="progress" aria-label="Lernabschnitt">
@@ -385,10 +451,57 @@
     <div class="screen-progress" aria-label="Lernfortschritt: Schritt 2 von 5, 40 Prozent abgeschlossen">
       <div class="progress-head"><strong>Schritt 2 von 5</strong><span>40 % abgeschlossen</span></div>
       <div class="progress-track" role="progressbar" aria-label="Lernfortschritt" aria-valuemin="0" aria-valuemax="5" aria-valuenow="2"><div class="progress-fill" style="width:40%"></div></div>
-      <ol class="progress-stages" aria-label="Lernabschnitte"><li class="is-complete">Start</li><li class="is-current" aria-current="step">Übung</li><li>Prüfen</li><li>Reflektieren</li><li>Ziel</li></ol>
+      <ol class="progress-stages" aria-label="Lernabschnitte"><li class="is-complete"><button class="stage-link" type="button" data-go="start">Start</button></li><li class="is-current" aria-current="step"><button class="stage-link" type="button" data-go="exercise" disabled>Übung</button></li><li><button class="stage-link" type="button" data-go="check" disabled>Prüfen</button></li><li><button class="stage-link" type="button" disabled>Reflektieren</button></li><li><button class="stage-link" type="button" disabled>Ziel</button></li></ol>
     </div>
-    <button class="back-button" id="back-start" type="button">← Zurück zur Auswahl</button>
+    <div class="screen-nav"><button class="back-button" id="back-start" type="button">← Zurück zur Auswahl</button><button class="primary-button" id="to-check" type="button" disabled>Weiter zur Prüfung <span aria-hidden="true">→</span></button></div>
     </section>
+    <section class="screen check-screen" id="screen-check" aria-labelledby="check-title" hidden>
+      <div class="eyebrow">PRÜFEN</div>
+      <h1 id="check-title" tabindex="-1">Was fällt dir an der Darstellung auf?</h1>
+      <p class="intro">Prüfe die Grafik kurz, bevor du die Veränderung bewertest.</p>
+      <div class="chart-panel">
+        <p class="chart-title">Photovoltaik-Aufträge im Beispielbetrieb</p>
+        <p class="chart-caption">Aufträge pro Monat · fiktive Beispieldaten</p>
+        <svg class="chart-svg" viewBox="0 0 700 250" role="img" aria-labelledby="chart-title chart-desc">
+          <title id="chart-title">Aufträge von Januar bis Mai</title>
+          <desc id="chart-desc">Säulendiagramm mit Werten zwischen 80 und 100 Aufträgen. Die y-Achse beginnt bei 80 und lässt den Anstieg dadurch stärker wirken.</desc>
+          <line x1="72" y1="20" x2="72" y2="205" stroke="#5b5b5b" stroke-width="2"/><line x1="72" y1="205" x2="670" y2="205" stroke="#5b5b5b" stroke-width="2"/>
+          <g stroke="#d1d1d1" stroke-width="1"><line x1="72" y1="20" x2="670" y2="20"/><line x1="72" y1="66" x2="670" y2="66"/><line x1="72" y1="112" x2="670" y2="112"/><line x1="72" y1="158" x2="670" y2="158"/></g>
+          <g fill="#5b5b5b" font-size="14" font-family="Segoe UI, sans-serif"><text x="24" y="210">80</text><text x="24" y="163">85</text><text x="24" y="117">90</text><text x="24" y="71">95</text><text x="16" y="25">100</text><text x="125" y="232">Jan</text><text x="240" y="232">Feb</text><text x="355" y="232">Mär</text><text x="470" y="232">Apr</text><text x="585" y="232">Mai</text></g>
+          <g fill="#c62828"><rect x="115" y="158" width="58" height="47" rx="3"/><rect x="230" y="130" width="58" height="75" rx="3"/><rect x="345" y="102" width="58" height="103" rx="3"/><rect x="460" y="66" width="58" height="139" rx="3"/><rect x="575" y="20" width="58" height="185" rx="3"/></g>
+        </svg>
+      </div>
+      <p><strong>Welche Prüfung ist hier besonders wichtig?</strong></p>
+      <div class="answer-options" role="group" aria-label="Antwort auswählen">
+        <button class="answer-option" type="button" data-correct="true" aria-pressed="false">Die y-Achse beginnt bei 80 statt bei 0 und lässt den Anstieg größer wirken.</button>
+        <button class="answer-option" type="button" data-correct="false" aria-pressed="false">Die Monatsnamen sind abgekürzt.</button>
+        <button class="answer-option" type="button" data-correct="false" aria-pressed="false">Die Balken haben abgerundete Ecken.</button>
+      </div>
+      <div class="feedback-box" id="check-feedback" role="status" aria-live="polite" hidden></div>
+      <div class="screen-progress" aria-label="Lernfortschritt: Schritt 3 von 5, 60 Prozent abgeschlossen">
+        <div class="progress-head"><strong>Schritt 3 von 5</strong><span>60 % abgeschlossen</span></div>
+        <div class="progress-track" role="progressbar" aria-label="Lernfortschritt" aria-valuemin="0" aria-valuemax="5" aria-valuenow="3"><div class="progress-fill" style="width:60%"></div></div>
+        <ol class="progress-stages" aria-label="Lernabschnitte"><li class="is-complete"><button class="stage-link" type="button" data-go="start">Start</button></li><li class="is-complete"><button class="stage-link" type="button" data-go="exercise">Übung</button></li><li class="is-current" aria-current="step"><button class="stage-link" type="button" data-go="check" disabled>Prüfen</button></li><li><button class="stage-link" type="button" disabled>Reflektieren</button></li><li><button class="stage-link" type="button" disabled>Ziel</button></li></ol>
+      </div>
+      <div class="screen-nav"><button class="back-button" id="back-exercise" type="button">← Zurück zur Übung</button><button class="primary-button" id="finish-check" type="button" disabled>Abschließen <span aria-hidden="true">✓</span></button></div>
+    </section>
+    <dialog class="orientation-dialog" id="orientation-dialog" aria-labelledby="orientation-title" aria-describedby="orientation-description">
+      <div class="orientation-content">
+        <div class="eyebrow">KURZER LEITGEDANKE</div>
+        <h2 id="orientation-title">Daten zeigen etwas – aber nicht immer die ganze Geschichte.</h2>
+        <p id="orientation-description">Data Literacy bedeutet, Daten kritisch zu lesen, einzuordnen und passende Fragen zu stellen, bevor du daraus eine Aussage ableitest.</p>
+        <p class="orientation-prompt"><strong>Behalte für die Übung im Kopf:</strong> Was zeigen die Daten wirklich – und welcher Kontext fehlt vielleicht noch?</p>
+        <ul class="orientation-list"><li>Beobachten, was auffällt</li><li>Prüfen, welche Aussage sich stützen lässt</li><li>Kontext wie Zeitraum und Vergleich ergänzen</li></ul>
+        <div class="orientation-actions"><button class="primary-button" id="orientation-continue" type="button">Zurück zum Überblick</button></div>
+      </div>
+    </dialog>
+    <dialog class="feedback-dialog" id="feedback-dialog" aria-labelledby="feedback-title" aria-describedby="feedback-copy">
+      <div class="feedback-content">
+        <div class="feedback-heading"><span class="feedback-symbol" id="feedback-symbol" aria-hidden="true"></span><h2 id="feedback-title"></h2></div>
+        <p class="feedback-copy" id="feedback-copy"></p>
+        <div class="feedback-dialog-actions"><button class="primary-button" id="feedback-action" type="button"></button></div>
+      </div>
+    </dialog>
     <aside class="a11y-dock" aria-label="Barrierefreiheit">
       <button class="a11y-launch" id="a11y-launch" type="button" aria-expanded="false" aria-controls="a11y-panel"><svg class="a11y-icon" viewBox="0 0 32 32" fill="none" aria-hidden="true"><circle cx="16" cy="16" r="14.5" stroke="currentColor" stroke-width="1.8"/><circle cx="16" cy="8" r="3.2" stroke="currentColor" stroke-width="1.8"/><path d="M6.5 13.8h19M16 11.3v8m0 0-6 9m6-9 6 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Barrierefreiheit</span></button>
       <section class="a11y-panel" id="a11y-panel" aria-label="Ansicht anpassen" hidden>
@@ -406,6 +519,42 @@
     const startNext = document.getElementById('start-next');
     const selectionHint = document.getElementById('selection-hint');
     const preferenceNote = document.getElementById('preference-note');
+    const orientationDialog = document.getElementById('orientation-dialog');
+    const revealedCards = new Set();
+    const disabledHelp = [];
+    function hintFor(button) {
+      if (button.id === 'start-next') return 'Wähle zuerst eine Startoption.';
+      if (button.id === 'to-check') return 'Drehe zuerst alle drei Fragenkarten um.';
+      if (button.dataset.go === 'exercise') return 'Wähle zuerst eine Startoption, um zur Übung zu gelangen.';
+      if (button.dataset.go === 'check' && button.closest('#screen-start')) return 'Starte zuerst die Übung und decke alle drei Karten auf.';
+      if (button.dataset.go === 'check') return 'Drehe zuerst alle drei Fragenkarten um.';
+      return 'Dieser Schritt ist in diesem Beispiel noch nicht umgesetzt.';
+    }
+    document.querySelectorAll('#start-next, #to-check, .progress-stages .stage-link:disabled').forEach((button, index) => {
+      if (button.closest('[aria-current="step"]')) return;
+      const wrapper = document.createElement('span');
+      wrapper.className = 'help-anchor';
+      wrapper.setAttribute('role', 'group');
+      wrapper.setAttribute('aria-label', button.textContent.trim());
+      const tooltip = document.createElement('span');
+      tooltip.className = 'help-tooltip';
+      tooltip.id = `disabled-help-${index}`;
+      tooltip.setAttribute('role', 'tooltip');
+      tooltip.textContent = hintFor(button);
+      button.setAttribute('aria-describedby', tooltip.id);
+      button.parentNode.insertBefore(wrapper, button);
+      wrapper.append(button, tooltip);
+      disabledHelp.push({ button, wrapper, tooltip });
+    });
+    function syncDisabledHelp() {
+      disabledHelp.forEach(({ button, wrapper, tooltip }) => {
+        const disabled = button.disabled;
+        wrapper.dataset.disabled = String(disabled);
+        wrapper.tabIndex = disabled ? 0 : -1;
+        tooltip.hidden = !disabled;
+      });
+    }
+    syncDisabledHelp();
     let selectedStart = null;
 
     document.querySelectorAll('.choice').forEach((choice) => {
@@ -414,39 +563,125 @@
         choice.setAttribute('aria-pressed', 'true');
         selectedStart = choice.dataset.choice;
         startNext.disabled = false;
+        syncDisabledHelp();
         selectionHint.textContent = selectedStart === 'orient'
-          ? 'Gute Wahl – du startest mit einem kurzen Leitgedanken.'
+          ? 'Der Leitgedanke öffnet sich. Du kannst danach direkt zur Übung gehen.'
           : 'Gute Wahl – du springst direkt in die Fragen.';
+        if (selectedStart === 'orient' && !orientationDialog.open) orientationDialog.showModal();
       });
     });
 
     function showExercise() {
+      if (orientationDialog.open) orientationDialog.close();
       startScreen.hidden = true;
       exerciseScreen.hidden = false;
-      document.getElementById('breadcrumb-current').textContent = 'Kurzübung';
+      document.getElementById('screen-check').hidden = true;
+      document.querySelectorAll('#screen-start [data-go="exercise"]').forEach((stage) => { stage.disabled = false; });
+      syncDisabledHelp();
+      document.getElementById('breadcrumb-current').textContent = 'Übung';
       preferenceNote.hidden = false;
       preferenceNote.textContent = selectedStart === 'orient'
-        ? 'Dein Einstieg: Behalte den Merksatz unten im Blick und öffne dann die Karten – erst beobachten, dann interpretieren.'
+        ? 'Dein Einstieg: Behalte den Leitgedanken im Blick und öffne dann die Karten – erst beobachten, dann interpretieren.'
         : 'Du startest direkt mit den drei Fragen. Tippe eine Karte an, um eine Beispielantwort zu sehen.';
       window.scrollTo({ top: 0, behavior: 'smooth' });
       document.getElementById('exercise-title').focus?.();
     }
 
-    startNext.addEventListener('click', showExercise);
-    document.getElementById('back-start').addEventListener('click', () => {
+    orientationDialog.addEventListener('click', (event) => {
+      if (event.target === orientationDialog) {
+        orientationDialog.close();
+        document.querySelector('[data-choice="orient"]').focus();
+      }
+    });
+    document.getElementById('orientation-continue').addEventListener('click', () => orientationDialog.close());
+    function showCheck() {
+      startScreen.hidden = true;
       exerciseScreen.hidden = true;
+      document.getElementById('screen-check').hidden = false;
+      document.getElementById('breadcrumb-current').textContent = 'Prüfen';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      document.getElementById('check-title').focus();
+    }
+
+    function showStart() {
       startScreen.hidden = false;
-      document.getElementById('breadcrumb-current').textContent = 'Einstieg';
+      exerciseScreen.hidden = true;
+      document.getElementById('screen-check').hidden = true;
+      document.getElementById('breadcrumb-current').textContent = 'Start';
       window.scrollTo({ top: 0, behavior: 'smooth' });
       document.getElementById('start-title').focus();
+    }
+
+    document.querySelectorAll('.stage-link[data-go]').forEach((stage) => {
+      stage.addEventListener('click', () => {
+        if (stage.disabled) return;
+        if (stage.dataset.go === 'start') showStart();
+        if (stage.dataset.go === 'exercise') showExercise();
+        if (stage.dataset.go === 'check' && revealedCards.size === 3) showCheck();
+      });
     });
+
+    startNext.addEventListener('click', () => {
+      if (selectedStart === 'orient') orientationDialog.showModal();
+      else if (selectedStart === 'direct') showExercise();
+    });
+    document.getElementById('to-check').addEventListener('click', showCheck);
+    document.getElementById('back-start').addEventListener('click', showStart);
+    document.getElementById('back-exercise').addEventListener('click', showExercise);
     document.getElementById('breadcrumb-root').addEventListener('click', (event) => {
       event.preventDefault();
-      exerciseScreen.hidden = true;
-      startScreen.hidden = false;
-      document.getElementById('breadcrumb-current').textContent = 'Einstieg';
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      document.getElementById('start-title').focus();
+      showStart();
+    });
+
+    const checkFeedback = document.getElementById('check-feedback');
+    const feedbackDialog = document.getElementById('feedback-dialog');
+    const feedbackAction = document.getElementById('feedback-action');
+    let lastAnswerOption = null;
+    let feedbackCorrect = false;
+    function closeFeedback() {
+      if (feedbackDialog.open) feedbackDialog.close();
+      if (lastAnswerOption) lastAnswerOption.focus();
+    }
+    function showFeedback(correct, option) {
+      lastAnswerOption = option;
+      feedbackCorrect = correct;
+      feedbackDialog.dataset.state = correct ? 'correct' : 'incorrect';
+      document.getElementById('feedback-symbol').textContent = correct ? '✓' : '×';
+      document.getElementById('feedback-title').textContent = correct ? 'Richtig erkannt' : 'Noch einmal prüfen';
+      document.getElementById('feedback-copy').textContent = correct
+        ? 'Die y-Achse beginnt bei 80 statt bei 0. Dadurch wirkt der Anstieg größer. Achte auf den Achsenstart, bevor du den Trend bewertest.'
+        : 'Schau dir den Achsenstart noch einmal an. Die y-Achse beginnt bei 80 statt bei 0 und lässt den Anstieg dadurch stärker wirken. Probier es noch einmal.';
+      feedbackAction.textContent = correct ? 'Zurück zur Aufgabe' : 'Zurück';
+      feedbackDialog.showModal();
+      feedbackAction.focus();
+    }
+    document.querySelectorAll('.answer-option').forEach((option) => {
+      option.addEventListener('click', () => {
+        const correct = option.dataset.correct === 'true';
+        document.querySelectorAll('.answer-option').forEach((item) => {
+          item.setAttribute('aria-pressed', 'false');
+          item.classList.remove('is-correct', 'is-incorrect');
+        });
+        option.setAttribute('aria-pressed', 'true');
+        option.classList.add(correct ? 'is-correct' : 'is-incorrect');
+        document.getElementById('finish-check').disabled = !correct;
+        showFeedback(correct, option);
+      });
+    });
+    feedbackAction.addEventListener('click', closeFeedback);
+    feedbackDialog.addEventListener('click', (event) => {
+      if (event.target === feedbackDialog) closeFeedback();
+    });
+    feedbackDialog.addEventListener('cancel', (event) => {
+      event.preventDefault();
+      closeFeedback();
+    });
+    document.getElementById('finish-check').addEventListener('click', (event) => {
+      checkFeedback.dataset.state = 'complete';
+      checkFeedback.innerHTML = '<strong>Übung abgeschlossen.</strong> Du hast eine wichtige Prüffrage kennengelernt: Beginnt die Achse bei null – und wie beeinflusst das den Eindruck?';
+      checkFeedback.hidden = false;
+      event.currentTarget.disabled = true;
+      event.currentTarget.innerHTML = 'Abgeschlossen <span aria-hidden="true">✓</span>';
     });
 
     document.querySelectorAll('.flip-card').forEach((card, index) => {
@@ -460,6 +695,11 @@
         card.setAttribute('aria-label', flipped
           ? `Schritt ${step}. Frage: ${question}. Beispielantwort: ${answerLabel}. ${answer} Zum Zurückwechseln aktivieren.`
           : `Schritt ${step}. Frage: ${question}. Aktivieren, um die Beispielantwort anzuzeigen.`);
+        if (flipped) revealedCards.add(index);
+        const allRevealed = revealedCards.size === 3;
+        document.getElementById('to-check').disabled = !allRevealed;
+        document.querySelectorAll('#screen-exercise [data-go="check"], #screen-start [data-go="check"]').forEach((stage) => { stage.disabled = !allRevealed; });
+        syncDisabledHelp();
       });
     });
 
